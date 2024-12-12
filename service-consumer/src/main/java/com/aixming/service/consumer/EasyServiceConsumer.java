@@ -1,7 +1,8 @@
-package com.aixming.service.consumer.common;
+package com.aixming.service.consumer;
 
 import com.aixming.common.model.User;
 import com.aixming.common.service.UserService;
+import com.aixming.rpc.proxy.ServiceProxyFactory;
 
 /**
  * @author AixMing
@@ -9,14 +10,10 @@ import com.aixming.common.service.UserService;
  */
 public class EasyServiceConsumer {
     public static void main(String[] args) {
-        UserService userService = null;
+        UserService userService = ServiceProxyFactory.getProxy(UserService.class);
         User user = new User();
         user.setName("aixming");
         User newUser = userService.getUser(user);
-        if (newUser != null) {
-            System.out.println(newUser.getName());
-        } else {
-            System.out.println("user == null");
-        }
+        System.out.println(newUser);
     }
 }
