@@ -10,10 +10,18 @@ import com.aixming.rpc.proxy.ServiceProxyFactory;
  */
 public class EasyServiceConsumer {
     public static void main(String[] args) {
+        // 现在要调用远程服务
+        // 获取代理
         UserService userService = ServiceProxyFactory.getProxy(UserService.class);
         User user = new User();
-        user.setName("aixming");
+        user.setName("aixming1111");
         User newUser = userService.getUser(user);
-        System.out.println(newUser);
+        if (newUser != null) {
+            System.out.println(newUser.getName());
+        } else {
+            System.out.println("newUser is null");
+        }
+        short number = userService.getNumber();
+        System.out.println(number);
     }
 }
