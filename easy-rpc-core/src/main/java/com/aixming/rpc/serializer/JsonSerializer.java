@@ -1,6 +1,7 @@
 package com.aixming.rpc.serializer;
 
 import com.aixming.rpc.model.RpcRequest;
+import com.aixming.rpc.model.RpcResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -21,19 +22,19 @@ public class JsonSerializer implements Serializer {
     }
 
     @Override
-    public <T> T deSerialize(byte[] bytes, Class<T> type) throws IOException {
-        T object = OBJECT_MAPPER.readValue(bytes, type);
-        // if(object instanceof RpcRequest){
-        //     return 
-        // }
-        // if(object instanceof RpcResponse){
-        //    
-        // }
+    public <T> T deSerialize(byte[] bytes, Class<T> classType) throws IOException {
+        T object = OBJECT_MAPPER.readValue(bytes, classType);
+        if (object instanceof RpcRequest) {
+            return handleRequest((RpcRequest) object, classType);
+        }
+        if (object instanceof RpcResponse) {
+            return handleResponse((RpcResponse) object, classType);
+        }
         return object;
     }
 
     /**
-     * 由于 Object 的原始对象会被擦除，导致反序列化时会被作为 LinkedHashMap 无法转换成原始对象，因此这里做了特殊处理
+     * 由于 Object 的原始泛型会被擦除，导致反序列化时会被作为 LinkedHashMap 无法转换成原始对象，因此这里做了特殊处理
      *
      * @param rpcRequest
      * @param type
@@ -48,13 +49,29 @@ public class JsonSerializer implements Serializer {
         // 循环处理每个参数的类型
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> clazz = parameterTypes[i];
-            // 如果类型不同，则重新处理一下类型
+            // 如果类型不同，则重新处理一下参数的类型
             if (!clazz.isAssignableFrom(args[i].getClass())) {
-                byte[] argBytes = OBJECT_MAPPER.writeValueAsBytes(args[i]);
-                args[i] = OBJECT_MAPPER.readValue(argBytes, clazz);
+                byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(args[i]);
+                args[i] = OBJECT_MAPPER.readValue(bytes, clazz);
             }
         }
         return type.cast(rpcRequest);
+    }
+
+    /**
+     * 由于 Object 的原始泛型会被擦除，导致反序列化时会被作为 LinkedHashMap 无法转换成原始对象，因此这里做了特殊处理
+     *
+     * @param rpcResponse
+     * @param type
+     * @param <T>
+     * @return
+     * @throws IOException
+     */
+    private static <T> T handleResponse(RpcResponse rpcResponse, Class<T> type) throws IOException {
+        // 处理响应数据
+        byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(rpcResponse.getData());
+        rpcResponse.setData(OBJECT_MAPPER.readValue(bytes, rpcResponse.getDataType()));
+        return type.cast(rpcResponse);
     }
 
 }

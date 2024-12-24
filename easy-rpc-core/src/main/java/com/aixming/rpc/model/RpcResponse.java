@@ -25,7 +25,7 @@ public class RpcResponse implements Serializable {
     private Object data;
 
     /**
-     * 相应数据类型（预留）
+     * 响应数据类型（预留）
      */
     private Class<?> dataType;
 
@@ -38,5 +38,5 @@ public class RpcResponse implements Serializable {
      * 异常信息
      */
     private Exception exception;
-    
+
 }
