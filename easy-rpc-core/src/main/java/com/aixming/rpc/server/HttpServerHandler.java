@@ -1,14 +1,15 @@
 package com.aixming.rpc.server;
 
+import com.aixming.rpc.RpcApplication;
+import com.aixming.rpc.model.RpcRequest;
+import com.aixming.rpc.model.RpcResponse;
 import com.aixming.rpc.registry.LocalRegistry;
-import com.aixming.rpc.serializer.JdkSerializer;
 import com.aixming.rpc.serializer.Serializer;
+import com.aixming.rpc.serializer.SerializerFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import com.aixming.rpc.model.RpcRequest;
-import com.aixming.rpc.model.RpcResponse;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -23,7 +24,8 @@ public class HttpServerHandler implements Handler<HttpServerRequest> {
 
     @Override
     public void handle(HttpServerRequest request) {
-        final Serializer serializer = new JdkSerializer();
+        // 工厂+配置获取序列化器
+        final Serializer serializer = SerializerFactory.getInstance(RpcApplication.getRpcConfig().getSerializer());
 
         // 记录日志
         System.out.println("received request: " + request.method() + " " + request.uri());
