@@ -1,11 +1,14 @@
 package com.aixming.rpc.model;
 
+import lombok.Data;
+
 /**
  * 服务元信息（注册信息）
  *
  * @author AixMing
  * @since 2024-12-26 19:44:31
  */
+@Data
 public class ServiceMetaInfo {
 
     /**
@@ -50,7 +53,19 @@ public class ServiceMetaInfo {
      * @return
      */
     public String getServiceNodeKey() {
-        return String.format("%s:%s:%s", getServiceKey(), serviceHost, servicePort);
+        return String.format("%s/%s:%s", getServiceKey(), serviceHost, servicePort);
+    }
+
+    /**
+     * 获取完整服务地址
+     *
+     * @return
+     */
+    public String getServiceAddress() {
+        if (!serviceHost.contains("http")) {
+            return String.format("http://%s:%s", serviceHost, servicePort);
+        }
+        return String.format("%s:%s", serviceHost, servicePort);
     }
 
 }

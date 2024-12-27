@@ -1,7 +1,10 @@
 package com.aixming.rpc;
 
+import com.aixming.rpc.config.RegistryConfig;
 import com.aixming.rpc.config.RpcConfig;
 import com.aixming.rpc.constant.RpcConstant;
+import com.aixming.rpc.registry.Registry;
+import com.aixming.rpc.registry.RegistryFactory;
 import com.aixming.rpc.utils.ConfigUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +28,10 @@ public class RpcApplication {
     public static void init(RpcConfig newRpcConfig) {
         rpcConfig = newRpcConfig;
         log.info("rpc init, config = {}", newRpcConfig.toString());
+        RegistryConfig registryConfig = rpcConfig.getRegistryConfig();
+        Registry registry = RegistryFactory.getInstance(registryConfig.getRegistry());
+        registry.init(registryConfig);
+        log.info("registry init, config = {}", registryConfig);
     }
 
     /**
