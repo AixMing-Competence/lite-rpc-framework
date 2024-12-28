@@ -1,5 +1,8 @@
 package com.aixming.rpc.registry;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.cron.CronUtil;
+import cn.hutool.cron.task.Task;
 import cn.hutool.json.JSONUtil;
 import com.aixming.rpc.config.RegistryConfig;
 import com.aixming.rpc.model.ServiceMetaInfo;
@@ -9,7 +12,9 @@ import io.etcd.jetcd.options.PutOption;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -26,12 +31,48 @@ public class EtcdRegistry implements Registry {
 
     private static final String ETCD_ROOT_PATH = "/rpc/";
 
+    /**
+     * 本机注册的节点 key 集合（用于维护续期）
+     */
+    private final Set<String> localRegistryNodeKeySet = new HashSet<>();
+
+    @Override
+    public void heartBeat() {
+        // 每 10 秒钟执行一次
+        CronUtil.schedule("*/10 * * * * *", (Task) () -> {
+            // 遍历本节点所有的提供的所有节点 key
+            for (String key : localRegistryNodeKeySet) {
+                try {
+                    List<KeyValue> keyValues = kvClient.get(ByteSequence.from(key, StandardCharsets.UTF_8))
+                            .get()
+                            .getKvs();
+                    // 该节点已过期（需要重新启动节点才能重新注册）
+                    if (CollUtil.isEmpty(keyValues)) {
+                        continue;
+                    }
+                    // 节点未过期，重新注册（相当于续约）
+                    String value = keyValues.get(0).getValue().toString(StandardCharsets.UTF_8);
+                    ServiceMetaInfo bean = JSONUtil.toBean(value, ServiceMetaInfo.class);
+                    register(bean);
+                } catch (Exception e) {
+                    throw new RuntimeException(key + " 续签失败", e);
+                }
+            }
+        });
+
+        // 支持秒级别定时任务
+        CronUtil.setMatchSecond(true);
+        CronUtil.start();
+    }
+
     @Override
     public void init(RegistryConfig registryConfig) {
         client = Client.builder().endpoints(registryConfig.getAddress())
                 .connectTimeout(Duration.ofMillis(registryConfig.getTimeout()))
                 .build();
         kvClient = client.getKVClient();
+        // 调用心跳检测功能
+        heartBeat();
     }
 
     @Override
@@ -48,12 +89,18 @@ public class EtcdRegistry implements Registry {
         PutOption putOption = PutOption.builder().withLeaseId(leaseId).build();
         // 保存键值对
         kvClient.put(key, value, putOption);
+
+        // 添加节点信息到本地缓存
+        localRegistryNodeKeySet.add(registryKey);
     }
 
     @Override
     public void unRegister(ServiceMetaInfo serviceMetaInfo) {
+        String registerKey = ETCD_ROOT_PATH + serviceMetaInfo.getServiceNodeKey();
         // 删除键值对
-        kvClient.delete(ByteSequence.from(ETCD_ROOT_PATH + serviceMetaInfo.getServiceNodeKey(), StandardCharsets.UTF_8));
+        kvClient.delete(ByteSequence.from(registerKey, StandardCharsets.UTF_8));
+        // 从本地缓存删除节点信息
+        localRegistryNodeKeySet.remove(registerKey);
     }
 
     @Override

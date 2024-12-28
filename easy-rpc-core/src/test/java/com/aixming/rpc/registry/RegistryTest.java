@@ -51,7 +51,7 @@ public class RegistryTest {
     public void unRegister() {
         ServiceMetaInfo serviceMetaInfo = new ServiceMetaInfo();
         serviceMetaInfo.setServiceHost("localhost");
-        serviceMetaInfo.setServicePort(1234);
+        serviceMetaInfo.setServicePort(1235);
         serviceMetaInfo.setServiceName("myService");
         serviceMetaInfo.setServiceVersion("1.0");
         registry.unRegister(serviceMetaInfo);
@@ -66,6 +66,15 @@ public class RegistryTest {
         List<ServiceMetaInfo> serviceMetaInfoList = registry.serviceDiscovery(serviceKey);
         Assert.assertNotNull(serviceMetaInfoList);
         System.out.println(serviceMetaInfoList);
+        
+    }
+
+    @Test
+    public void testHeartBeat() throws Exception {
+        // 在 init 方法中已经执行心跳检测功能了
+        register();
+        // 阻塞 1 分钟
+        Thread.sleep(60 * 1000L);
     }
 
 }
