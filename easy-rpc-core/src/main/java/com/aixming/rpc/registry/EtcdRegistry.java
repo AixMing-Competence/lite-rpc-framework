@@ -32,6 +32,11 @@ public class EtcdRegistry implements Registry {
     private static final String ETCD_ROOT_PATH = "/rpc/";
 
     /**
+     * 注册中心本地服务缓存
+     */
+    private final RegistryServiceMultiCache registryServiceMultiCache = new RegistryServiceMultiCache();
+
+    /**
      * 本机注册的节点 key 集合（用于维护续期）
      */
     private final Set<String> localRegistryNodeKeySet = new HashSet<>();
@@ -107,6 +112,12 @@ public class EtcdRegistry implements Registry {
 
     @Override
     public List<ServiceMetaInfo> serviceDiscovery(String serviceKey) {
+        // 优先从缓存中获取服务
+        List<ServiceMetaInfo> serviceMetaInfoListCache = registryServiceMultiCache.readCache(serviceKey);
+        if (CollUtil.isNotEmpty(serviceMetaInfoListCache)) {
+            return serviceMetaInfoListCache;
+        }
+
         // 前缀搜索，结尾一定要加 '/'
         String searchPrefix = ETCD_ROOT_PATH + serviceKey + "/";
 
@@ -121,6 +132,8 @@ public class EtcdRegistry implements Registry {
                 String jsonStr = item.getValue().toString(StandardCharsets.UTF_8);
                 return JSONUtil.toBean(jsonStr, ServiceMetaInfo.class);
             }).collect(Collectors.toList());
+            // 写入本地缓存
+            registryServiceMultiCache.writeCache(serviceKey, serviceMetaInfoList);
             return serviceMetaInfoList;
         } catch (Exception e) {
             throw new RuntimeException("获取服务列表失败", e);
