@@ -59,7 +59,6 @@ public class EtcdRegistry implements Registry {
                 }
             }
         });
-
         // 支持秒级别定时任务
         CronUtil.setMatchSecond(true);
         CronUtil.start();
@@ -89,7 +88,6 @@ public class EtcdRegistry implements Registry {
         PutOption putOption = PutOption.builder().withLeaseId(leaseId).build();
         // 保存键值对
         kvClient.put(key, value, putOption);
-
         // 添加节点信息到本地缓存
         localRegistryNodeKeySet.add(registryKey);
     }
@@ -98,7 +96,11 @@ public class EtcdRegistry implements Registry {
     public void unRegister(ServiceMetaInfo serviceMetaInfo) {
         String registerKey = ETCD_ROOT_PATH + serviceMetaInfo.getServiceNodeKey();
         // 删除键值对
-        kvClient.delete(ByteSequence.from(registerKey, StandardCharsets.UTF_8));
+        try {
+            kvClient.delete(ByteSequence.from(registerKey, StandardCharsets.UTF_8)).get();
+        } catch (Exception e) {
+            throw new RuntimeException(registerKey + "节点下线失败", e);
+        }
         // 从本地缓存删除节点信息
         localRegistryNodeKeySet.remove(registerKey);
     }
@@ -128,6 +130,15 @@ public class EtcdRegistry implements Registry {
     @Override
     public void destroy() {
         System.out.println("当前节点下线");
+        // 下线节点
+        // 遍历所有本节点所有服务
+        for (String key : localRegistryNodeKeySet) {
+            try {
+                kvClient.delete(ByteSequence.from(key, StandardCharsets.UTF_8)).get();
+            } catch (Exception e) {
+                throw new RuntimeException(key + "节点下线失败", e);
+            }
+        }
         // 释放资源
         if (kvClient != null) {
             kvClient.close();

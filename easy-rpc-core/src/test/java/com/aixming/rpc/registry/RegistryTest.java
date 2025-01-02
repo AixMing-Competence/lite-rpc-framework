@@ -45,14 +45,15 @@ public class RegistryTest {
         serviceMetaInfo3.setServicePort(12345);
         serviceMetaInfo3.setServiceVersion("2.0");
         registry.register(serviceMetaInfo3);
+        Thread.sleep(60 * 1000L);
     }
 
     @Test
     public void unRegister() {
         ServiceMetaInfo serviceMetaInfo = new ServiceMetaInfo();
-        serviceMetaInfo.setServiceHost("localhost");
-        serviceMetaInfo.setServicePort(1235);
         serviceMetaInfo.setServiceName("myService");
+        serviceMetaInfo.setServiceHost("localhost");
+        serviceMetaInfo.setServicePort(1234);
         serviceMetaInfo.setServiceVersion("1.0");
         registry.unRegister(serviceMetaInfo);
     }
@@ -66,7 +67,6 @@ public class RegistryTest {
         List<ServiceMetaInfo> serviceMetaInfoList = registry.serviceDiscovery(serviceKey);
         Assert.assertNotNull(serviceMetaInfoList);
         System.out.println(serviceMetaInfoList);
-        
     }
 
     @Test
@@ -75,6 +75,11 @@ public class RegistryTest {
         register();
         // 阻塞 1 分钟
         Thread.sleep(60 * 1000L);
+    }
+
+    @Test
+    public void destroy() {
+        registry.destroy();
     }
 
 }
