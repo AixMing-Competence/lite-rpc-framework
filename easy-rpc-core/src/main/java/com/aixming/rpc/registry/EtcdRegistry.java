@@ -1,6 +1,7 @@
 package com.aixming.rpc.registry;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ConcurrentHashSet;
 import cn.hutool.cron.CronUtil;
 import cn.hutool.cron.task.Task;
 import cn.hutool.json.JSONUtil;
@@ -9,6 +10,7 @@ import com.aixming.rpc.model.ServiceMetaInfo;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.watch.WatchEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -40,6 +42,34 @@ public class EtcdRegistry implements Registry {
      * 本机注册的节点 key 集合（用于维护续期）
      */
     private final Set<String> localRegistryNodeKeySet = new HashSet<>();
+
+    /**
+     * 当前正在监听的 key 集合
+     */
+    private final Set<String> watchingKetSet = new ConcurrentHashSet<>();
+
+    @Override
+    public void watch(String serviceNodeKey) {
+        Watch watchClient = client.getWatchClient();
+        boolean isNewWatch = localRegistryNodeKeySet.add(serviceNodeKey);
+        // 如果当前服务还没有被监听，则启动监听
+        if (isNewWatch) {
+            watchClient.watch(ByteSequence.from(serviceNodeKey, StandardCharsets.UTF_8), watchResponse -> {
+                for (WatchEvent event : watchResponse.getEvents()) {
+                    switch (event.getEventType()) {
+                        // 删除 key 时触发
+                        case DELETE:
+                            // 清理注册服务缓存
+                            localRegistryNodeKeySet.remove(serviceNodeKey);
+                            break;
+                        case PUT:
+                        default:
+                            break;
+                    }
+                }
+            });
+        }
+    }
 
     @Override
     public void heartBeat() {
@@ -129,6 +159,8 @@ public class EtcdRegistry implements Registry {
                     .getKvs();
             // 解析服务信息
             List<ServiceMetaInfo> serviceMetaInfoList = keyValues.stream().map(item -> {
+                // 对对当前服务进行监听
+                watch(item.getKey().toString(StandardCharsets.UTF_8));
                 String jsonStr = item.getValue().toString(StandardCharsets.UTF_8);
                 return JSONUtil.toBean(jsonStr, ServiceMetaInfo.class);
             }).collect(Collectors.toList());
