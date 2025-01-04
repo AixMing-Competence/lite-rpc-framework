@@ -1,1 +1,2 @@
 etcd=com.aixming.rpc.registry.EtcdRegistry
+zookeeper=com.aixming.rpc.registry.ZooKeeperRegistry
