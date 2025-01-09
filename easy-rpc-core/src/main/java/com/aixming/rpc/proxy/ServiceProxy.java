@@ -1,8 +1,6 @@
 package com.aixming.rpc.proxy;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import com.aixming.rpc.RpcApplication;
 import com.aixming.rpc.config.RegistryConfig;
 import com.aixming.rpc.config.RpcConfig;
@@ -14,8 +12,8 @@ import com.aixming.rpc.registry.Registry;
 import com.aixming.rpc.registry.RegistryFactory;
 import com.aixming.rpc.serializer.Serializer;
 import com.aixming.rpc.serializer.SerializerFactory;
+import com.aixming.rpc.server.tcp.VertxTCPClient;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -55,18 +53,22 @@ public class ServiceProxy implements InvocationHandler {
                 throw new RuntimeException("暂无服务地址");
             }
             ServiceMetaInfo selectedServiceMetaInfo = serviceMetaInfoList.get(0);
-            // 发请求
-            try (HttpResponse httpResponse = HttpRequest.post(selectedServiceMetaInfo.getServiceAddress())
-                    .body(bytes)
-                    .execute()) {
-                byte[] result = httpResponse.bodyBytes();
-                // 反序列化
-                RpcResponse rpcResponse = serializer.deSerialize(result, RpcResponse.class);
-                return rpcResponse.getData();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            // // 发http请求
+            // try (HttpResponse httpResponse = HttpRequest.post(selectedServiceMetaInfo.getServiceAddress())
+            //         .body(bytes)
+            //         .execute()) {
+            //     byte[] result = httpResponse.bodyBytes();
+            //     // 反序列化
+            //     RpcResponse rpcResponse = serializer.deSerialize(result, RpcResponse.class);
+            //     return rpcResponse.getData();
+            // }
+
+            // 发送 TCP 请求
+            RpcResponse rpcResponse = VertxTCPClient.doRequest(rpcRequest, selectedServiceMetaInfo);
+            return rpcResponse.getData();
+        } catch (Exception e) {
+            throw new RuntimeException("远程调用失败");
         }
-        return null;
     }
 }

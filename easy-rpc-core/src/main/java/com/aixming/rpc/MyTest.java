@@ -1,8 +1,7 @@
 package com.aixming.rpc;
 
-import com.aixming.rpc.serializer.Serializer;
-
-import java.util.ServiceLoader;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 测试类
@@ -12,13 +11,9 @@ import java.util.ServiceLoader;
  */
 public class MyTest {
 
-    public static void main(String[] args) {
-        Serializer serializer = null;
-        ServiceLoader<Serializer> serializerServiceLoader = ServiceLoader.load(Serializer.class);
-        for (Serializer service : serializerServiceLoader) {
-            serializer = service;
-        }
-        System.out.println(serializer);
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        CompletableFuture<String> future1 = new CompletableFuture<>();
+        future1.complete("aksdjksa");
     }
 
 }

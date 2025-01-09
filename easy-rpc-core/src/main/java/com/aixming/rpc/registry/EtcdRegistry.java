@@ -36,7 +36,7 @@ public class EtcdRegistry implements Registry {
     /**
      * 注册中心本地服务缓存
      */
-    private final RegistryServiceMultiCache registryServiceMultiCache = new RegistryServiceMultiCache();
+    private final RegistryServiceCache registryServiceCache = new RegistryServiceCache();
 
     /**
      * 本机注册的节点 key 集合（用于维护续期）
@@ -114,7 +114,7 @@ public class EtcdRegistry implements Registry {
         // 创建 Lease 客户端
         Lease leaseClient = client.getLeaseClient();
         // 创建一个 30 秒的租约
-        long leaseId = leaseClient.grant(600).get().getID();
+        long leaseId = leaseClient.grant(30).get().getID();
         // 设置要存储的键值对
         String registryKey = ETCD_ROOT_PATH + serviceMetaInfo.getServiceNodeKey();
         ByteSequence key = ByteSequence.from(registryKey, StandardCharsets.UTF_8);
@@ -143,7 +143,7 @@ public class EtcdRegistry implements Registry {
     @Override
     public List<ServiceMetaInfo> serviceDiscovery(String serviceKey) {
         // 优先从缓存中获取服务
-        List<ServiceMetaInfo> serviceMetaInfoListCache = registryServiceMultiCache.readCache(serviceKey);
+        List<ServiceMetaInfo> serviceMetaInfoListCache = registryServiceCache.readCache();
         if (CollUtil.isNotEmpty(serviceMetaInfoListCache)) {
             return serviceMetaInfoListCache;
         }
@@ -165,7 +165,7 @@ public class EtcdRegistry implements Registry {
                 return JSONUtil.toBean(jsonStr, ServiceMetaInfo.class);
             }).collect(Collectors.toList());
             // 写入本地缓存
-            registryServiceMultiCache.writeCache(serviceKey, serviceMetaInfoList);
+            registryServiceCache.writeCache(serviceMetaInfoList);
             return serviceMetaInfoList;
         } catch (Exception e) {
             throw new RuntimeException("获取服务列表失败", e);

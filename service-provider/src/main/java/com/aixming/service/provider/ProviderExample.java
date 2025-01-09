@@ -9,7 +9,7 @@ import com.aixming.rpc.model.ServiceMetaInfo;
 import com.aixming.rpc.registry.LocalRegistry;
 import com.aixming.rpc.registry.Registry;
 import com.aixming.rpc.registry.RegistryFactory;
-import com.aixming.rpc.server.VertxHttpServer;
+import com.aixming.rpc.server.tcp.VertxTcpServer;
 
 /**
  * 服务提供者示例
@@ -40,7 +40,7 @@ public class ProviderExample {
             throw new RuntimeException(e);
         }
         // 启动 web 服务
-        VertxHttpServer server = new VertxHttpServer();
+        VertxTcpServer server = new VertxTcpServer();
         server.doStart(rpcConfig.getServerPort());
     }
 
