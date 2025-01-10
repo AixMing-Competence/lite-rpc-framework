@@ -5,6 +5,8 @@ import com.aixming.rpc.RpcApplication;
 import com.aixming.rpc.config.RegistryConfig;
 import com.aixming.rpc.config.RpcConfig;
 import com.aixming.rpc.constant.RpcConstant;
+import com.aixming.rpc.loadbalancer.LoadBalancer;
+import com.aixming.rpc.loadbalancer.LoadBalancerFactory;
 import com.aixming.rpc.model.RpcRequest;
 import com.aixming.rpc.model.RpcResponse;
 import com.aixming.rpc.model.ServiceMetaInfo;
@@ -16,6 +18,7 @@ import com.aixming.rpc.server.tcp.VertxTCPClient;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -52,7 +55,13 @@ public class ServiceProxy implements InvocationHandler {
             if (CollUtil.isEmpty(serviceMetaInfoList)) {
                 throw new RuntimeException("暂无服务地址");
             }
-            ServiceMetaInfo selectedServiceMetaInfo = serviceMetaInfoList.get(0);
+
+            // 负载均衡
+            LoadBalancer loadBalancer = LoadBalancerFactory.getInstance(rpcConfig.getLoadBalancer());
+            // 将调用方法名作为负载均衡参数
+            HashMap<String, Object> requestParams = new HashMap<>();
+            requestParams.put("methodName",rpcRequest.getMethodName());
+            ServiceMetaInfo selectedServiceMetaInfo = loadBalancer.select(requestParams, serviceMetaInfoList);
 
             // // 发http请求
             // try (HttpResponse httpResponse = HttpRequest.post(selectedServiceMetaInfo.getServiceAddress())

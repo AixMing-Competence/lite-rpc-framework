@@ -27,4 +27,5 @@ public interface UserService {
     default short getNumber() {
         return 1;
     }
+    
 }

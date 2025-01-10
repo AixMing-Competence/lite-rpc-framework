@@ -25,7 +25,6 @@ public class TcpServerHandler implements Handler<NetSocket> {
     public void handle(NetSocket socket) {
         TcpBufferHandlerWrapper tcpBufferHandlerWrapper = new TcpBufferHandlerWrapper(buffer -> {
             ProtocolMessage<RpcRequest> protocolMessage;
-            System.out.println("进入了请求处理逻辑当中");
             try {
                 protocolMessage = (ProtocolMessage<RpcRequest>) ProtocolMessageDecoder.decode(buffer);
             } catch (IOException e) {

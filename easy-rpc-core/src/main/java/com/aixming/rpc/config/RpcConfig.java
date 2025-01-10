@@ -1,5 +1,6 @@
 package com.aixming.rpc.config;
 
+import com.aixming.rpc.loadbalancer.LoadBalancerKeys;
 import com.aixming.rpc.serializer.SerializerKeys;
 import lombok.Data;
 
@@ -46,5 +47,10 @@ public class RpcConfig {
      * 序列化器
      */
     private String serializer = SerializerKeys.JDK;
+
+    /**
+     * 负载均衡器
+     */
+    private String loadBalancer = LoadBalancerKeys.RANDOM;
 
 }

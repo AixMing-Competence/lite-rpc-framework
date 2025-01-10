@@ -1,0 +1,3 @@
+random=com.aixming.rpc.loadbalancer.RandomLoadBalancer
+roundRobin=com.aixming.rpc.loadbalancer.RoundRobinLoadBalancer
+consistentHash=com.aixming.rpc.loadbalancer.ConsistentHashLoadBalancer
