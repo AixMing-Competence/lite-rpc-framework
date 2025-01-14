@@ -7,6 +7,8 @@ import com.aixming.rpc.config.RpcConfig;
 import com.aixming.rpc.constant.RpcConstant;
 import com.aixming.rpc.fault.retry.RetryStrategy;
 import com.aixming.rpc.fault.retry.RetryStrategyFactory;
+import com.aixming.rpc.fault.tolerant.TolerantStrategy;
+import com.aixming.rpc.fault.tolerant.TolerantStrategyFactory;
 import com.aixming.rpc.loadbalancer.LoadBalancer;
 import com.aixming.rpc.loadbalancer.LoadBalancerFactory;
 import com.aixming.rpc.model.RpcRequest;
@@ -45,7 +47,7 @@ public class ServiceProxy implements InvocationHandler {
                 .build();
         try {
             // 序列化
-            byte[] bytes = serializer.serialize(rpcRequest);
+            // byte[] bytes = serializer.serialize(rpcRequest);
             // 从注册中心获取服务请求地址
             RegistryConfig registryConfig = rpcConfig.getRegistryConfig();
             Registry registry = RegistryFactory.getInstance(registryConfig.getRegistry());
@@ -84,7 +86,10 @@ public class ServiceProxy implements InvocationHandler {
 
             return rpcResponse.getData();
         } catch (Exception e) {
-            throw new RuntimeException("远程调用失败");
+            // throw new RuntimeException("远程调用失败");
+            // 使用容错机制
+            TolerantStrategy tolerantStrategy = TolerantStrategyFactory.getInstance(rpcConfig.getTolerantStrategy());
+            return tolerantStrategy.doTolerant(null, e);
         }
     }
 }

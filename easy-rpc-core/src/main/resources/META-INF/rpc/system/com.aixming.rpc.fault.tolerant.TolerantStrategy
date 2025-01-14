@@ -1,0 +1,4 @@
+failOver=com.aixming.rpc.fault.tolerant.FailOverTolerantStrategy
+failBack=com.aixming.rpc.fault.tolerant.FailBackTolerantStrategy
+failFast=com.aixming.rpc.fault.tolerant.FailFastTolerantStrategy
+failSafe=com.aixming.rpc.fault.tolerant.FailSafeTolerantStrategy
