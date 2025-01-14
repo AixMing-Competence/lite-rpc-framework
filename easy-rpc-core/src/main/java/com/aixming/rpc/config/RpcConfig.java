@@ -1,5 +1,6 @@
 package com.aixming.rpc.config;
 
+import com.aixming.rpc.fault.retry.RetryStrategyKeys;
 import com.aixming.rpc.loadbalancer.LoadBalancerKeys;
 import com.aixming.rpc.serializer.SerializerKeys;
 import lombok.Data;
@@ -52,5 +53,10 @@ public class RpcConfig {
      * 负载均衡器
      */
     private String loadBalancer = LoadBalancerKeys.RANDOM;
+
+    /**
+     * 重试策略
+     */
+    private String retryStrategy = RetryStrategyKeys.NO;
 
 }

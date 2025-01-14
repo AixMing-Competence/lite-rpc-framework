@@ -1,0 +1,2 @@
+no=com.aixming.rpc.fault.retry.NoRetryStrategy
+fixedInterval=com.aixming.rpc.fault.retry.FixedIntervalRetryStrategy

@@ -5,6 +5,8 @@ import com.aixming.rpc.RpcApplication;
 import com.aixming.rpc.config.RegistryConfig;
 import com.aixming.rpc.config.RpcConfig;
 import com.aixming.rpc.constant.RpcConstant;
+import com.aixming.rpc.fault.retry.RetryStrategy;
+import com.aixming.rpc.fault.retry.RetryStrategyFactory;
 import com.aixming.rpc.loadbalancer.LoadBalancer;
 import com.aixming.rpc.loadbalancer.LoadBalancerFactory;
 import com.aixming.rpc.model.RpcRequest;
@@ -60,7 +62,7 @@ public class ServiceProxy implements InvocationHandler {
             LoadBalancer loadBalancer = LoadBalancerFactory.getInstance(rpcConfig.getLoadBalancer());
             // 将调用方法名作为负载均衡参数
             HashMap<String, Object> requestParams = new HashMap<>();
-            requestParams.put("methodName",rpcRequest.getMethodName());
+            requestParams.put("methodName", rpcRequest.getMethodName());
             ServiceMetaInfo selectedServiceMetaInfo = loadBalancer.select(requestParams, serviceMetaInfoList);
 
             // // 发http请求
@@ -74,7 +76,12 @@ public class ServiceProxy implements InvocationHandler {
             // }
 
             // 发送 TCP 请求
-            RpcResponse rpcResponse = VertxTCPClient.doRequest(rpcRequest, selectedServiceMetaInfo);
+            // 使用重试机制
+            RetryStrategy retryStrategy = RetryStrategyFactory.getInstance(rpcConfig.getRetryStrategy());
+            RpcResponse rpcResponse = retryStrategy.doRetry(() ->
+                    VertxTCPClient.doRequest(rpcRequest, selectedServiceMetaInfo)
+            );
+
             return rpcResponse.getData();
         } catch (Exception e) {
             throw new RuntimeException("远程调用失败");
