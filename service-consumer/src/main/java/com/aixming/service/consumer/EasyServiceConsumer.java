@@ -11,6 +11,7 @@ import com.aixming.rpc.proxy.ServiceProxyFactory;
  */
 public class EasyServiceConsumer {
     public static void main(String[] args) {
+        
         // 服务提供者初始化
         ConsumerBootstrap.init();
 
@@ -28,4 +29,5 @@ public class EasyServiceConsumer {
         short number = userService.getNumber();
         System.out.println(number);
     }
+    
 }
