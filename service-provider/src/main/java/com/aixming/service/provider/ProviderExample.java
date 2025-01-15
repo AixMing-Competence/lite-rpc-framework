@@ -1,15 +1,10 @@
 package com.aixming.service.provider;
 
 import com.aixming.common.service.UserService;
-import com.aixming.rpc.RpcApplication;
-import com.aixming.rpc.config.RegistryConfig;
-import com.aixming.rpc.config.RpcConfig;
-import com.aixming.rpc.constant.RpcConstant;
-import com.aixming.rpc.model.ServiceMetaInfo;
-import com.aixming.rpc.registry.LocalRegistry;
-import com.aixming.rpc.registry.Registry;
-import com.aixming.rpc.registry.RegistryFactory;
-import com.aixming.rpc.server.tcp.VertxTcpServer;
+import com.aixming.rpc.bootstrap.ProviderBootstrap;
+import com.aixming.rpc.bootstrap.ServiceRegisterInfo;
+
+import java.util.ArrayList;
 
 /**
  * 服务提供者示例
@@ -20,28 +15,12 @@ import com.aixming.rpc.server.tcp.VertxTcpServer;
 public class ProviderExample {
 
     public static void main(String[] args) {
-        // 加载配置文件
-        RpcApplication.init();
-        // 注册服务
-        String serviceName = UserService.class.getName();
-        LocalRegistry.register(serviceName, UserServiceImpl.class);
-        // 注册服务到注册中心
-        RpcConfig rpcConfig = RpcApplication.getRpcConfig();
-        RegistryConfig registryConfig = rpcConfig.getRegistryConfig();
-        Registry registry = RegistryFactory.getInstance(registryConfig.getRegistry());
-        ServiceMetaInfo serviceMetaInfo = new ServiceMetaInfo();
-        serviceMetaInfo.setServiceName(serviceName);
-        serviceMetaInfo.setServiceHost(rpcConfig.getServerHost());
-        serviceMetaInfo.setServicePort(rpcConfig.getServerPort());
-        serviceMetaInfo.setServiceVersion(RpcConstant.DEFAULT_SERVICE_VERSION);
-        try {
-            registry.register(serviceMetaInfo);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        // 启动 web 服务
-        VertxTcpServer server = new VertxTcpServer();
-        server.doStart(rpcConfig.getServerPort());
+        ArrayList<ServiceRegisterInfo<?>> serviceRegisterInfoList = new ArrayList<>();
+        ServiceRegisterInfo<UserService> serviceRegisterInfo = new ServiceRegisterInfo(UserService.class.getName(), UserServiceImpl.class);
+        serviceRegisterInfoList.add(serviceRegisterInfo);
+        
+        // 服务提供者初始化
+        ProviderBootstrap.init(serviceRegisterInfoList);
     }
 
 }

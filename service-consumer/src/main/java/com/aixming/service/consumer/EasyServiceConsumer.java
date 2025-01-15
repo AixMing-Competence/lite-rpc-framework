@@ -2,6 +2,7 @@ package com.aixming.service.consumer;
 
 import com.aixming.common.model.User;
 import com.aixming.common.service.UserService;
+import com.aixming.rpc.bootstrap.ConsumerBootstrap;
 import com.aixming.rpc.proxy.ServiceProxyFactory;
 
 /**
@@ -10,6 +11,9 @@ import com.aixming.rpc.proxy.ServiceProxyFactory;
  */
 public class EasyServiceConsumer {
     public static void main(String[] args) {
+        // 服务提供者初始化
+        ConsumerBootstrap.init();
+
         // 现在要调用远程服务
         // 获取代理
         UserService userService = ServiceProxyFactory.getProxy(UserService.class);
